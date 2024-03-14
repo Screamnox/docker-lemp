@@ -1,0 +1,62 @@
+# Define the version of the Compose file (v3 in this case)
+# version: '3'
+
+# Services
+services:
+
+  # Nginx Service (web server)
+  nginx:
+    # Latest image of nginx
+    image: nginx:latest
+    # Port mapping: Expose container port 80 to host port 80
+    ports:
+      - 80:80
+    # Volumes: Mount directories or files from the host system into the container
+    volumes:
+      - ./app:/var/www/php   # Mount "./app" directory on host to "/var/www/php" in container (application code)
+      - ./.docker/nginx/conf.d:/etc/nginx/conf.d  # Mount "./.docker/nginx/conf.d" directory on host to "/etc/nginx/conf.d" in container (custom Nginx configurations)
+    # Depends on: This service won't start until the "php" service is up and running
+    depends_on:
+      - php
+
+  # PHP Service (application runtime)
+  php:
+    # Build the image from the Dockerfile located at "./.docker/php"
+    build: ./.docker/php
+    # Set the working directory inside the container
+    working_dir: /var/www/php
+    # Volumes: Same as Nginx service
+    volumes:
+      - ./app:/var/www/php
+    # Depends on: This service won't start until the "mariadb" service is up and running
+    depends_on:
+      - mariadb
+
+  # MariaDB Service (database server)
+  mariadb:
+    image: mariadb:10.9
+    # Environment variables: Set environment variables inside the container
+    environment:
+      MYSQL_ROOT_PASSWORD: root  # Set the root password for MariaDB (consider using .env for sensitive data)
+    # Volumes: Persist data directory across container restarts
+    volumes:
+      - mysqldata:/var/lib/mysql
+
+  # phpMyAdmin Service (database administration tool)
+  phpmyadmin:
+    # Latest image of phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    # Port mapping: Expose container port 8080 to host port 8080
+    ports:
+      - 8080:80
+    # Environment variables: Set environment variable for phpMyAdmin to connect to the "mariadb" service
+    environment:
+      PMA_HOST: mariadb
+    # Depends on: This service won't start until the "mariadb" service is up and running
+    depends_on:
+      - mariadb
+
+# Volumes section defines persistent storage for services
+volumes:
+  # Define a named volume "mysqldata" that persists MariaDB data directory
+  mysqldata:
