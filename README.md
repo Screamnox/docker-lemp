@@ -1,4 +1,4 @@
-# LEMP Development Environment with Docker Compose
+# [OUTDATED] LEMP Development Environment with Docker Compose
 
 ## Getting Started
 
